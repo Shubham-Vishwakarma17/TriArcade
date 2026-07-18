@@ -15,34 +15,76 @@ export interface WumpusState {
   status: WumpusStatus
   message: string
 }
-const key = ({ row, column }: Point) => `${row}:${column}`
+export const pointKey = ({ row, column }: Point) => `${row}:${column}`
 export const adjacent = (a: Point, b: Point) =>
   Math.abs(a.row - b.row) + Math.abs(a.column - b.column) === 1
-export function createWorld(): WumpusState {
-  return {
-    size: 4,
-    agent: { row: 3, column: 0 },
-    pits: [
-      { row: 3, column: 2 },
-      { row: 1, column: 2 },
-      { row: 0, column: 3 },
-    ],
-    wumpus: { row: 1, column: 0 },
-    gold: { row: 0, column: 1 },
-    visited: ['3:0'],
-    hasGold: false,
-    arrow: true,
-    wumpusAlive: true,
-    score: 0,
-    status: 'playing',
-    message: 'Enter the cave and find the hidden gold.',
+function shuffled<T>(items: T[], random: () => number) {
+  const result = [...items]
+  for (let index = result.length - 1; index > 0; index -= 1) {
+    const swap = Math.floor(random() * (index + 1))
+    ;[result[index], result[swap]] = [result[swap], result[index]]
   }
+  return result
+}
+export function solutionPath(state: Pick<WumpusState, 'size' | 'pits' | 'wumpus' | 'gold'>) {
+  const start = { row: state.size - 1, column: 0 }
+  const blocked = new Set([...state.pits, state.wumpus].map(pointKey))
+  const queue: Point[][] = [[start]]
+  const seen = new Set([pointKey(start)])
+  while (queue.length) {
+    const path = queue.shift()!
+    const current = path.at(-1)!
+    if (pointKey(current) === pointKey(state.gold)) return path
+    for (const offset of Object.values(delta)) {
+      const next = { row: current.row + offset.row, column: current.column + offset.column }
+      const nextKey = pointKey(next)
+      if (
+        next.row >= 0 &&
+        next.column >= 0 &&
+        next.row < state.size &&
+        next.column < state.size &&
+        !blocked.has(nextKey) &&
+        !seen.has(nextKey)
+      ) {
+        seen.add(nextKey)
+        queue.push([...path, next])
+      }
+    }
+  }
+  return []
+}
+export function createWorld(random: () => number = Math.random): WumpusState {
+  const size = 4
+  const start = { row: size - 1, column: 0 }
+  const rooms = Array.from({ length: size * size }, (_, index) => ({
+    row: Math.floor(index / size),
+    column: index % size,
+  })).filter((room) => pointKey(room) !== pointKey(start) && !adjacent(room, start))
+  let state: WumpusState
+  do {
+    const layout = shuffled(rooms, random)
+    state = {
+      size,
+      agent: start,
+      wumpus: layout[0],
+      pits: layout.slice(1, 4),
+      gold: layout[4],
+      visited: [pointKey(start)],
+      hasGold: false,
+      arrow: true,
+      wumpusAlive: true,
+      score: 0,
+      status: 'playing',
+      message: 'A new cave has formed. Find the hidden gold.',
+    }
+  } while (!solutionPath(state).length)
+  return state
 }
 export function percepts(state: WumpusState) {
   return {
     breeze: state.pits.some((pit) => adjacent(state.agent, pit)),
     stench: state.wumpusAlive && adjacent(state.agent, state.wumpus),
-    glitter: !state.hasGold && key(state.agent) === key(state.gold),
+    glitter: !state.hasGold && pointKey(state.agent) === pointKey(state.gold),
   }
 }
 const delta: Record<Direction, Point> = {
@@ -60,17 +102,17 @@ export function moveAgent(state: WumpusState, direction: Direction): WumpusState
   const common = {
     ...state,
     agent: next,
-    visited: [...new Set([...state.visited, key(next)])],
+    visited: [...new Set([...state.visited, pointKey(next)])],
     score: state.score - 1,
   }
-  if (state.pits.some((p) => key(p) === key(next)))
+  if (state.pits.some((p) => pointKey(p) === pointKey(next)))
     return {
       ...common,
       status: 'dead',
       score: state.score - 1001,
       message: 'You fell into a bottomless pit.',
     }
-  if (state.wumpusAlive && key(state.wumpus) === key(next))
+  if (state.wumpusAlive && pointKey(state.wumpus) === pointKey(next))
     return {
       ...common,
       status: 'dead',
@@ -80,7 +122,7 @@ export function moveAgent(state: WumpusState, direction: Direction): WumpusState
   return { ...common, message: 'The agent moved carefully into a new room.' }
 }
 export function grabGold(state: WumpusState): WumpusState {
-  if (state.status !== 'playing' || key(state.agent) !== key(state.gold) || state.hasGold)
+  if (state.status !== 'playing' || pointKey(state.agent) !== pointKey(state.gold) || state.hasGold)
     return state
   return {
     ...state,
@@ -90,7 +132,7 @@ export function grabGold(state: WumpusState): WumpusState {
   }
 }
 export function escape(state: WumpusState): WumpusState {
-  if (state.status !== 'playing' || key(state.agent) !== '3:0') return state
+  if (state.status !== 'playing' || pointKey(state.agent) !== '3:0') return state
   if (!state.hasGold) return { ...state, message: 'Find the gold before leaving the cave.' }
   return {
     ...state,
@@ -113,7 +155,7 @@ export function shoot(state: WumpusState, direction: Direction): WumpusState {
       cursor.column >= state.size
     )
       break
-    if (key(cursor) === key(state.wumpus)) {
+    if (pointKey(cursor) === pointKey(state.wumpus)) {
       hit = true
       break
     }

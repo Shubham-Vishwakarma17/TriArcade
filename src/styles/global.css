@@ -22,6 +22,14 @@
   color: #c4b5fd;
   font: 700 13px 'Space Grotesk';
 }
+.wumpus-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.wumpus-header-actions .icon-button svg {
+  width: 17px;
+}
 .queens-page {
   background: radial-gradient(circle at 25% 20%, #2c174d 0, transparent 32rem), #080c17;
 }
@@ -292,6 +300,82 @@
   box-shadow:
     inset 0 0 28px #14b8a633,
     0 0 20px #14b8a655;
+}
+.cave-cell.solution-room {
+  box-shadow:
+    inset 0 0 0 4px #22c55e99,
+    inset 0 0 28px #22c55e33;
+}
+.cave-cell.solution-room::before {
+  content: 'SAFE';
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  z-index: 5;
+  color: #86efac;
+  font-size: 6px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+}
+.cave-cell.solution-danger {
+  background: radial-gradient(circle, #4b1e24, #170b0e 72%);
+  box-shadow: inset 0 0 0 3px #ef444477;
+}
+.hazard-reveal,
+.wumpus-reveal,
+.solution-gold {
+  position: relative;
+  z-index: 7;
+  display: grid;
+  place-items: center;
+  color: #fff;
+}
+.hazard-reveal span,
+.wumpus-reveal span {
+  font-size: clamp(28px, 5vw, 62px);
+  filter: drop-shadow(0 8px 8px #000);
+}
+.hazard-reveal em,
+.wumpus-reveal em,
+.solution-gold em {
+  margin-top: 3px;
+  padding: 3px 7px;
+  border-radius: 10px;
+  background: #210b0e;
+  color: #fca5a5;
+  font-size: 6px;
+  font-style: normal;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+}
+.wumpus-reveal span {
+  animation: wumpus-breathe 1.3s ease-in-out infinite alternate;
+}
+.wumpus-reveal em {
+  background: #3b1247;
+  color: #f0abfc;
+}
+.wumpus-reveal.defeated {
+  filter: grayscale(1);
+  opacity: 0.6;
+}
+.solution-gold {
+  color: #fde047;
+  filter: drop-shadow(0 0 12px #facc15);
+}
+.solution-gold svg {
+  width: clamp(28px, 4vw, 52px);
+  height: auto;
+}
+.solution-gold em {
+  background: #422006;
+  color: #fde68a;
+}
+@keyframes wumpus-breathe {
+  to {
+    transform: scale(1.12) rotate(-4deg);
+    filter: drop-shadow(0 0 15px #d946ef);
+  }
 }
 .room-coordinate {
   position: absolute;
@@ -619,6 +703,28 @@
 }
 .restart-mission {
   width: 100%;
+}
+.solution-toggle {
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 1px solid #a855f744;
+  border-radius: 9px;
+  background: #241333;
+  color: #d8b4fe;
+  cursor: pointer;
+  font-size: 9px;
+  font-weight: 800;
+}
+.solution-toggle svg {
+  width: 15px;
+}
+.solution-toggle.active {
+  border-color: #22c55e88;
+  background: #102d23;
+  color: #86efac;
 }
 @media (max-width: 920px) {
   .queens-layout,

@@ -4,13 +4,18 @@ import {
   ArrowRight,
   ArrowUp,
   Crosshair,
+  Eye,
+  EyeOff,
   Footprints,
   Gem,
   LogOut,
   RotateCcw,
+  Volume2,
+  VolumeX,
 } from 'lucide-react'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useGameSounds } from '../../chess/hooks/useGameSounds'
 import {
   createWorld,
   escape,
@@ -18,6 +23,7 @@ import {
   moveAgent,
   percepts,
   shoot,
+  solutionPath,
   type Direction,
 } from '../engine/gameEngine'
 
@@ -30,10 +36,23 @@ const directions: { id: Direction; label: string; icon: typeof ArrowUp }[] = [
 export function WumpusWorldPage() {
   const [game, setGame] = useState(createWorld)
   const [aiming, setAiming] = useState(false)
+  const [showSolution, setShowSolution] = useState(false)
+  const [soundOn, setSoundOn] = useState(true)
+  const playSound = useGameSounds(soundOn)
   const senses = percepts(game)
   const entrance = game.agent.row === 3 && game.agent.column === 0
+  const safeRoute = new Set(solutionPath(game).map((point) => `${point.row}:${point.column}`))
   function act(direction: Direction) {
-    setGame((current) => (aiming ? shoot(current, direction) : moveAgent(current, direction)))
+    setGame((current) => {
+      const next = aiming ? shoot(current, direction) : moveAgent(current, direction)
+      if (aiming) playSound(next.wumpusAlive !== current.wumpusAlive ? 'game-over' : 'capture')
+      else if (next.status === 'dead') playSound('capture')
+      else {
+        const nextSenses = percepts(next)
+        playSound(nextSenses.breeze || nextSenses.stench ? 'check' : 'move')
+      }
+      return next
+    })
     setAiming(false)
   }
   return (
@@ -49,7 +68,17 @@ export function WumpusWorldPage() {
             <small>Agent exploration</small>
           </div>
         </div>
-        <span className="game-header-score">Score {game.score}</span>
+        <div className="wumpus-header-actions">
+          <span className="game-header-score">Score {game.score}</span>
+          <button
+            className="icon-button"
+            type="button"
+            aria-label="Toggle sound"
+            onClick={() => setSoundOn(!soundOn)}
+          >
+            {soundOn ? <Volume2 /> : <VolumeX />}
+          </button>
+        </div>
       </header>
       <main className="wumpus-layout">
         <section className="cave-stage">
@@ -75,11 +104,14 @@ export function WumpusWorldPage() {
               const row = Math.floor(index / 4),
                 column = index % 4,
                 k = `${row}:${column}`,
-                visible = game.visited.includes(k),
+                visible = game.visited.includes(k) || showSolution,
                 agent = game.agent.row === row && game.agent.column === column
+              const pit = game.pits.some((point) => point.row === row && point.column === column)
+              const wumpus = game.wumpus.row === row && game.wumpus.column === column
+              const gold = game.gold.row === row && game.gold.column === column
               return (
                 <div
-                  className={`cave-cell ${visible ? 'explored' : 'hidden'} ${agent ? 'agent-cell' : ''}`}
+                  className={`cave-cell ${visible ? 'explored' : 'hidden'} ${agent ? 'agent-cell' : ''} ${showSolution && safeRoute.has(k) ? 'solution-room' : ''} ${showSolution && pit ? 'solution-danger' : ''}`}
                   role="gridcell"
                   aria-label={`Cave room ${row + 1}, ${column + 1}${visible ? ', explored' : ', unknown'}`}
                   key={k}
@@ -93,6 +125,24 @@ export function WumpusWorldPage() {
                     <small className="exit-marker">
                       <LogOut /> EXIT
                     </small>
+                  )}
+                  {showSolution && pit && (
+                    <div className="hazard-reveal">
+                      <span>🕳️</span>
+                      <em>PIT</em>
+                    </div>
+                  )}
+                  {showSolution && wumpus && (
+                    <div className={`wumpus-reveal ${game.wumpusAlive ? '' : 'defeated'}`}>
+                      <span>👹</span>
+                      <em>{game.wumpusAlive ? 'WUMPUS' : 'DEFEATED'}</em>
+                    </div>
+                  )}
+                  {showSolution && gold && !game.hasGold && (
+                    <div className="solution-gold">
+                      <Gem />
+                      <em>GOLD</em>
+                    </div>
                   )}
                   {agent && (
                     <>
@@ -124,10 +174,6 @@ export function WumpusWorldPage() {
                   {visible &&
                     game.status !== 'playing' &&
                     game.pits.some((p) => p.row === row && p.column === column) && <b>🕳️</b>}
-                  {visible &&
-                    !game.wumpusAlive &&
-                    game.wumpus.row === row &&
-                    game.wumpus.column === column && <b>👹</b>}
                 </div>
               )
             })}
@@ -203,13 +249,26 @@ export function WumpusWorldPage() {
             >
               <Crosshair /> {game.arrow ? 'Shoot arrow' : 'Arrow used'}
             </button>
-            <button type="button" disabled={!senses.glitter} onClick={() => setGame(grabGold)}>
+            <button
+              type="button"
+              disabled={!senses.glitter}
+              onClick={() => {
+                setGame(grabGold)
+                playSound('check')
+              }}
+            >
               <Gem /> Grab gold
             </button>
             <button
               type="button"
               disabled={!entrance || game.status !== 'playing'}
-              onClick={() => setGame(escape)}
+              onClick={() =>
+                setGame((current) => {
+                  const next = escape(current)
+                  if (next.status === 'won') playSound('game-over')
+                  return next
+                })
+              }
             >
               <LogOut /> Exit cave
             </button>
@@ -233,11 +292,20 @@ export function WumpusWorldPage() {
             </div>
           </div>
           <button
+            className={`solution-toggle ${showSolution ? 'active' : ''}`}
+            type="button"
+            onClick={() => setShowSolution(!showSolution)}
+          >
+            {showSolution ? <EyeOff /> : <Eye />} {showSolution ? 'Hide solution' : 'Show solution'}
+          </button>
+          <button
             className="restart-mission"
             type="button"
             onClick={() => {
               setGame(createWorld())
               setAiming(false)
+              setShowSolution(false)
+              playSound('restart')
             }}
           >
             <RotateCcw /> Restart mission
