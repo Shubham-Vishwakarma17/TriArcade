@@ -1238,13 +1238,7 @@ footer .brand-mark {
   pointer-events: none;
 }
 .ludo-token {
-  --row: 0;
-  --column: 0;
-  --ox: 0%;
-  --oy: 0%;
   position: absolute;
-  left: calc((var(--column) + 0.5) * 6.6667% + var(--ox));
-  top: calc((var(--row) + 0.5) * 6.6667% + var(--oy));
   width: 5.2%;
   aspect-ratio: 1;
   transform: translate(-50%, -50%);

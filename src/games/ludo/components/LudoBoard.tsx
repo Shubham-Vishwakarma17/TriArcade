@@ -87,12 +87,15 @@ export function LudoBoard({ state, onToken }: LudoBoardProps) {
             const stackIndex = samePoint.findIndex(
               ({ candidate, item }) => candidate.id === player.id && item.id === token.id,
             )
-            const offsets = [
-              [-1.5, -1.5],
-              [1.5, -1.5],
-              [-1.5, 1.5],
-              [1.5, 1.5],
-            ][stackIndex % 4]
+            const offsets =
+              samePoint.length === 1
+                ? [0, 0]
+                : [
+                    [-1.5, -1.5],
+                    [1.5, -1.5],
+                    [-1.5, 1.5],
+                    [1.5, 1.5],
+                  ][stackIndex % 4]
             const movable =
               state.currentPlayer === player.id && state.movableTokens.includes(token.id)
             return (
@@ -104,10 +107,8 @@ export function LudoBoard({ state, onToken }: LudoBoardProps) {
                 onClick={() => onToken(token.id)}
                 style={
                   {
-                    '--row': row,
-                    '--column': column,
-                    '--ox': `${offsets[0]}%`,
-                    '--oy': `${offsets[1]}%`,
+                    left: `${((column + 0.5) / 15) * 100 + offsets[0]}%`,
+                    top: `${((row + 0.5) / 15) * 100 + offsets[1]}%`,
                   } as CSSProperties
                 }
                 key={`${player.id}-${token.id}`}
