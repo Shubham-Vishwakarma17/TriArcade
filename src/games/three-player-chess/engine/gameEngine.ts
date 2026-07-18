@@ -1,15 +1,30 @@
 import { boardSquares } from './boardData'
-import {
-  diagonalNeighbors,
-  edgeNeighbors,
-  homeDistances,
-  pawnStarts,
-  promotionSquares,
-  traceLines,
-} from './topology'
+import { fromPerspective, pawnStarts, promotionSquares, targetFromPerspective } from './topology'
 import type { Piece, Player, ThreePlayerGameState, ThreePlayerMove } from './types'
 
 export const turnOrder: Player[] = ['white', 'black', 'red']
+const rookDirections = [
+  [1, 0],
+  [-1, 0],
+  [0, 1],
+  [0, -1],
+]
+const bishopDirections = [
+  [1, 1],
+  [-1, 1],
+  [1, -1],
+  [-1, -1],
+]
+const knightDirections = [
+  [2, 1],
+  [2, -1],
+  [-2, 1],
+  [-2, -1],
+  [1, 2],
+  [-1, 2],
+  [1, -2],
+  [-1, -2],
+]
 
 export function createThreePlayerGame(): ThreePlayerGameState {
   return {
@@ -26,78 +41,76 @@ export function createThreePlayerGame(): ThreePlayerGameState {
   }
 }
 
-function slidingTargets(state: ThreePlayerGameState, from: string, maps: Map<string, string[]>[]) {
+function slidingTargets(state: ThreePlayerGameState, from: string, directions: number[][]) {
   const piece = state.pieces[from]
   const targets = new Set<string>()
-  for (const map of maps) {
-    for (const line of traceLines(from, map)) {
-      for (const square of line) {
-        const occupant = state.pieces[square]
-        if (!occupant) targets.add(square)
-        else {
-          if (occupant.player !== piece.player) targets.add(square)
-          break
-        }
+  for (const [dx, dy] of directions) {
+    const visited = new Set<string>()
+    for (let distance = 1; distance < 9; distance += 1) {
+      const square = targetFromPerspective(piece.player, from, dx * distance, dy * distance)
+      if (!square || visited.has(square)) break
+      visited.add(square)
+      const occupant = state.pieces[square]
+      if (!occupant) targets.add(square)
+      else {
+        if (occupant.player !== piece.player) targets.add(square)
+        break
       }
     }
   }
   return [...targets]
 }
 
-function knightTargets(state: ThreePlayerGameState, from: string) {
+function jumpTargets(state: ThreePlayerGameState, from: string, directions: number[][]) {
   const piece = state.pieces[from]
-  const one = new Set(edgeNeighbors.get(from) ?? [])
-  const two = new Set([...one].flatMap((square) => edgeNeighbors.get(square) ?? []))
-  const three = new Set([...two].flatMap((square) => edgeNeighbors.get(square) ?? []))
-  const rookTargets = new Set(slidingTargets(state, from, [edgeNeighbors]))
-  return [...three].filter(
-    (square) =>
-      square !== from &&
-      !one.has(square) &&
-      !two.has(square) &&
-      !rookTargets.has(square) &&
-      state.pieces[square]?.player !== piece.player,
-  )
+  return [
+    ...new Set(
+      directions
+        .map(([dx, dy]) => targetFromPerspective(piece.player, from, dx, dy))
+        .filter(Boolean) as string[],
+    ),
+  ].filter((square) => state.pieces[square]?.player !== piece.player)
 }
 
 function pawnTargets(state: ThreePlayerGameState, from: string, attacksOnly: boolean) {
   const piece = state.pieces[from]
-  const distance = homeDistances[piece.player].get(from) ?? 0
-  const forward = (edgeNeighbors.get(from) ?? []).filter(
-    (square) => (homeDistances[piece.player].get(square) ?? 0) > distance,
-  )
-  const captures = (diagonalNeighbors.get(from) ?? []).filter((square) => {
-    const occupant = state.pieces[square]
-    return (
-      (homeDistances[piece.player].get(square) ?? 0) > distance &&
-      (attacksOnly || (occupant && occupant.player !== piece.player))
-    )
-  })
-  if (attacksOnly) return captures
-  const moves = forward.filter((square) => !state.pieces[square])
-  if (pawnStarts.has(from)) {
-    for (const first of moves) {
-      const firstDistance = homeDistances[piece.player].get(first) ?? 0
-      for (const second of edgeNeighbors.get(first) ?? []) {
-        if ((homeDistances[piece.player].get(second) ?? 0) > firstDistance && !state.pieces[second])
-          moves.push(second)
-      }
-    }
+  const captures = [-1, 1]
+    .map((dx) => targetFromPerspective(piece.player, from, dx, 1))
+    .filter(Boolean) as string[]
+  const view = fromPerspective(piece.player, from)
+  // The two central pawn files gain a third diagonal capture across the opposite seam.
+  if (view.y === 3 && view.x === 3) {
+    const extra = targetFromPerspective(piece.player, from, 2, 1)
+    if (extra) captures.push(extra)
+  } else if (view.y === 3 && view.x === 4) {
+    const extra = targetFromPerspective(piece.player, from, -2, 1)
+    if (extra) captures.push(extra)
   }
-  return [...new Set([...moves, ...captures])]
+  if (attacksOnly) return [...new Set(captures)]
+  const moves: string[] = []
+  const one = targetFromPerspective(piece.player, from, 0, 1)
+  if (one && !state.pieces[one]) {
+    moves.push(one)
+    const two = targetFromPerspective(piece.player, from, 0, 2)
+    if (pawnStarts.has(from) && two && !state.pieces[two]) moves.push(two)
+  }
+  for (const square of captures) {
+    const occupant = state.pieces[square]
+    if (occupant && occupant.player !== piece.player) moves.push(square)
+  }
+  return [...new Set(moves)]
 }
 
 export function pseudoLegalTargets(state: ThreePlayerGameState, from: string, attacksOnly = false) {
   const piece = state.pieces[from]
   if (!piece) return []
   if (piece.type === 'pawn') return pawnTargets(state, from, attacksOnly)
-  if (piece.type === 'rook') return slidingTargets(state, from, [edgeNeighbors])
-  if (piece.type === 'bishop') return slidingTargets(state, from, [diagonalNeighbors])
-  if (piece.type === 'queen') return slidingTargets(state, from, [edgeNeighbors, diagonalNeighbors])
-  if (piece.type === 'knight') return knightTargets(state, from)
-  return [
-    ...new Set([...(edgeNeighbors.get(from) ?? []), ...(diagonalNeighbors.get(from) ?? [])]),
-  ].filter((square) => state.pieces[square]?.player !== piece.player)
+  if (piece.type === 'rook') return slidingTargets(state, from, rookDirections)
+  if (piece.type === 'bishop') return slidingTargets(state, from, bishopDirections)
+  if (piece.type === 'queen')
+    return slidingTargets(state, from, [...rookDirections, ...bishopDirections])
+  if (piece.type === 'knight') return jumpTargets(state, from, knightDirections)
+  return jumpTargets(state, from, [...rookDirections, ...bishopDirections])
 }
 
 export function isInCheck(state: ThreePlayerGameState, player: Player) {
@@ -174,7 +187,6 @@ export function applyThreePlayerMove(
   }
   const active = turnOrder.filter((player) => !eliminated.includes(player))
   if (active.length === 1) return { ...result, winner: active[0], turn: active[0] }
-
   let next = nextActivePlayer(state.turn, eliminated)
   for (let attempts = 0; attempts < 3 && !allLegalMoves(result, next).length; attempts += 1) {
     if (isInCheck(result, next)) eliminated = [...eliminated, next]
@@ -189,7 +201,6 @@ export function gameStatus(state: ThreePlayerGameState) {
   if (state.winner) return `${capitalize(state.winner)} wins the game`
   return `${capitalize(state.turn)} to move${isInCheck(state, state.turn) ? ' — check' : ''}`
 }
-
 export function capitalize(value: string) {
   return value[0].toUpperCase() + value.slice(1)
 }
