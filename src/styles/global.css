@@ -1163,3 +1163,344 @@ footer .brand-mark {
     grid-column: 1/-1;
   }
 }
+
+/* Three-player chess */
+.three-game-page {
+  min-height: 100vh;
+  background: radial-gradient(circle at 43% 35%, #222942 0, #090d18 48rem);
+}
+.three-game-layout {
+  max-width: 1280px;
+  min-height: calc(100vh - 68px);
+  margin: auto;
+  padding: 20px;
+  display: grid;
+  grid-template-columns: minmax(620px, 900px) 310px;
+  gap: 22px;
+  align-items: center;
+}
+.three-board-panel {
+  min-width: 0;
+  padding: 10px;
+  display: grid;
+  place-items: center;
+}
+.three-board {
+  width: min(76vh, 100%);
+  height: auto;
+  max-height: calc(100vh - 108px);
+  overflow: visible;
+  filter: drop-shadow(0 30px 35px #0009);
+}
+.three-square {
+  cursor: pointer;
+  outline: none;
+}
+.three-square polygon {
+  stroke: #121621;
+  stroke-width: 1.25;
+  transition:
+    filter 0.12s,
+    fill 0.12s;
+}
+.three-square polygon.light {
+  fill: #e9e9ed;
+}
+.three-square polygon.dark {
+  fill: #343844;
+}
+.three-square:hover polygon,
+.three-square:focus polygon {
+  filter: brightness(1.12);
+  stroke: #a78bfa;
+  stroke-width: 2.5;
+}
+.three-square polygon.selected {
+  fill: #a78bfa;
+}
+.three-square polygon.last-move:not(.selected) {
+  fill: #9ba549;
+}
+.three-coordinate {
+  font: 700 11px 'DM Sans';
+  fill: #1d2230;
+  opacity: 0.55;
+  pointer-events: none;
+}
+.three-square:has(polygon.dark) .three-coordinate {
+  fill: #f4f4f5;
+}
+.three-piece {
+  pointer-events: none;
+  filter: drop-shadow(0 6px 4px #0006);
+}
+.three-target {
+  fill: #11182788;
+  pointer-events: none;
+}
+.three-capture {
+  fill: none;
+  stroke: #ef4444;
+  stroke-width: 7;
+  pointer-events: none;
+}
+.three-sidebar {
+  height: min(740px, calc(100vh - 100px));
+  min-height: 570px;
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+.three-status {
+  min-height: 68px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  border: 1px solid #8b5cf644;
+  border-radius: 14px;
+  background: #8b5cf611;
+}
+.three-status.winner {
+  border-color: #fbbf2466;
+  background: #fbbf2411;
+}
+.three-status small {
+  color: #8f9ab2;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+.three-status strong {
+  margin-top: 4px;
+  font: 600 15px 'Space Grotesk';
+}
+.three-players {
+  display: grid;
+  gap: 7px;
+}
+.three-players article {
+  min-height: 57px;
+  padding: 8px 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #111728;
+  position: relative;
+  overflow: hidden;
+}
+.three-players article::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--player-color);
+  opacity: 0.35;
+}
+.three-players article.active {
+  border-color: color-mix(in srgb, var(--player-color) 50%, transparent);
+  background: color-mix(in srgb, var(--player-color) 8%, #111728);
+}
+.three-players article.eliminated {
+  opacity: 0.38;
+  filter: grayscale(1);
+}
+.three-players article.white {
+  --player-color: #f4f4f5;
+}
+.three-players article.black {
+  --player-color: #77819a;
+}
+.three-players article.red {
+  --player-color: #ef4444;
+}
+.three-player-king {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  background: #ffffff0a;
+  font-size: 25px;
+}
+.three-players article > div {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+}
+.three-players strong {
+  font: 600 12px 'Space Grotesk';
+}
+.three-players small {
+  color: #737e97;
+  font-size: 9px;
+}
+.three-player-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--player-color);
+  box-shadow: 0 0 9px var(--player-color);
+}
+.three-history {
+  min-height: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: #101627;
+  overflow: hidden;
+}
+.three-history > div:last-child {
+  overflow: auto;
+  padding: 7px;
+}
+.three-history p {
+  min-height: 30px;
+  margin: 0;
+  padding: 0 7px;
+  display: grid;
+  grid-template-columns: 25px 12px 1fr;
+  align-items: center;
+  gap: 5px;
+  border-radius: 6px;
+  font-size: 10px;
+}
+.three-history p:nth-child(odd) {
+  background: #ffffff05;
+}
+.three-history p span {
+  color: #66718a;
+}
+.three-history p i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+.three-history p i.white {
+  background: #f4f4f5;
+}
+.three-history p i.black {
+  background: #68738b;
+}
+.three-history p i.red {
+  background: #ef4444;
+}
+.three-history p strong {
+  font-weight: 600;
+}
+.three-controls {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 7px;
+}
+.three-controls button {
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: #141a2c;
+  color: #aab3c8;
+  cursor: pointer;
+  font-size: 10px;
+  font-weight: 700;
+}
+.three-controls button:hover:not(:disabled) {
+  color: white;
+  border-color: #8b5cf677;
+}
+.three-controls button:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+.three-rules {
+  width: min(520px, 100%);
+  padding: 30px;
+  border: 1px solid #ffffff1f;
+  border-radius: 22px;
+  background: #151b2e;
+  box-shadow: 0 35px 90px #000c;
+}
+.three-rules h2 {
+  margin: 0;
+  font: 700 32px 'Space Grotesk';
+  letter-spacing: -0.04em;
+}
+.three-rules ul {
+  margin: 24px 0;
+  padding-left: 20px;
+  color: #a6afc4;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.three-rules li {
+  margin-bottom: 10px;
+}
+.three-rules .primary-button {
+  border: 0;
+  color: white;
+  cursor: pointer;
+}
+@media (max-width: 1000px) {
+  .three-game-layout {
+    grid-template-columns: 1fr;
+  }
+  .three-board {
+    width: min(78vh, 900px, 100%);
+    max-height: none;
+  }
+  .three-sidebar {
+    height: auto;
+    min-height: 0;
+  }
+  .three-history {
+    max-height: 240px;
+  }
+  .three-players {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .three-players article {
+    min-width: 0;
+  }
+  .three-player-king {
+    display: none;
+  }
+}
+@media (max-width: 620px) {
+  .three-game-layout {
+    min-height: auto;
+    padding: 8px;
+    display: block;
+  }
+  .three-board-panel {
+    padding: 4px 0;
+    overflow-x: auto;
+  }
+  .three-board {
+    width: 700px;
+    max-width: none;
+  }
+  .three-sidebar {
+    margin-top: 10px;
+  }
+  .three-players {
+    grid-template-columns: 1fr;
+  }
+  .three-player-king {
+    display: grid;
+  }
+  .three-rules {
+    padding: 22px;
+  }
+  .three-rules h2 {
+    font-size: 27px;
+  }
+}
