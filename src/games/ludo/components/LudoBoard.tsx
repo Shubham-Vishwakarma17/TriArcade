@@ -1,5 +1,12 @@
 import type { CSSProperties } from 'react'
-import { homePaths, safeTrackIndexes, sharedTrack, tokenPoint } from '../engine/board'
+import {
+  colors,
+  homePaths,
+  safeTrackIndexes,
+  sharedTrack,
+  startOffsets,
+  tokenPoint,
+} from '../engine/board'
 import type { LudoState } from '../engine/types'
 
 interface LudoBoardProps {
@@ -23,8 +30,9 @@ function baseColor(row: number, column: number) {
 }
 
 export function LudoBoard({ state, onToken }: LudoBoardProps) {
+  const activeColor = state.players[state.currentPlayer].color
   return (
-    <div className="ludo-board" role="grid" aria-label="Ludo board">
+    <div className={`ludo-board active-${activeColor}`} role="grid" aria-label="Ludo board">
       {Array.from({ length: 225 }, (_, index) => {
         const row = Math.floor(index / 15)
         const column = index % 15
@@ -33,22 +41,35 @@ export function LudoBoard({ state, onToken }: LudoBoardProps) {
         const homeColor = homeKeys.get(key)
         const base = baseColor(row, column)
         const center = row >= 6 && row <= 8 && column >= 6 && column <= 8
+        const startPlayer = trackIndex === undefined ? -1 : startOffsets.indexOf(trackIndex)
         return (
           <div
-            className={`ludo-cell ${trackIndex !== undefined ? 'track' : ''} ${homeColor ? `home ${homeColor}` : ''} ${base ? `base ${base}` : ''} ${center ? 'center' : ''} ${trackIndex !== undefined && safeTrackIndexes.has(trackIndex) ? 'safe' : ''}`}
+            className={`ludo-cell ${trackIndex !== undefined ? 'track' : ''} ${homeColor ? `home ${homeColor}` : ''} ${base ? `base ${base}` : ''} ${center ? 'center' : ''} ${trackIndex !== undefined && safeTrackIndexes.has(trackIndex) ? 'safe' : ''} ${startPlayer >= 0 ? `player-start ${colors[startPlayer]}` : ''}`}
             role="gridcell"
             aria-label={`Board row ${row + 1}, column ${column + 1}`}
             key={key}
           >
             {trackIndex !== undefined && safeTrackIndexes.has(trackIndex) && <span>★</span>}
+            {startPlayer >= 0 && <b>➜</b>}
           </div>
         )
       })}
+      {colors.map((color) => (
+        <div className={`ludo-yard ${color}`} aria-hidden="true" key={color}>
+          <div>
+            <i />
+            <i />
+            <i />
+            <i />
+          </div>
+        </div>
+      ))}
       <div className="ludo-center" aria-hidden="true">
         <i className="red" />
         <i className="green" />
         <i className="yellow" />
         <i className="blue" />
+        <span>★</span>
       </div>
       <div className="ludo-token-layer">
         {state.players.flatMap((player) =>
@@ -97,10 +118,10 @@ export function LudoBoard({ state, onToken }: LudoBoardProps) {
           }),
         )}
       </div>
-      <div className="base-label red">RED</div>
-      <div className="base-label green">GREEN</div>
-      <div className="base-label yellow">YELLOW</div>
-      <div className="base-label blue">BLUE</div>
+      <div className="base-label red">RED HOME</div>
+      <div className="base-label green">GREEN HOME</div>
+      <div className="base-label yellow">YELLOW HOME</div>
+      <div className="base-label blue">BLUE HOME</div>
     </div>
   )
 }
