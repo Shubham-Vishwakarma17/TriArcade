@@ -72,7 +72,10 @@ export function NQueensPage() {
           </div>
           <div
             className="queens-board"
-            style={{ gridTemplateColumns: `repeat(${size}, 1fr)` }}
+            style={{
+              gridTemplateColumns: `repeat(${size}, minmax(0, 1fr))`,
+              gridTemplateRows: `repeat(${size}, minmax(0, 1fr))`,
+            }}
             role="grid"
             aria-label={`${size} by ${size} queens board`}
           >

@@ -65,6 +65,12 @@ export function WumpusWorldPage() {
             role="grid"
             aria-label="Wumpus cave"
           >
+            <div className="cave-grid-label cave-grid-top" aria-hidden="true">
+              <span>A</span>
+              <span>B</span>
+              <span>C</span>
+              <span>D</span>
+            </div>
             {Array.from({ length: 16 }, (_, index) => {
               const row = Math.floor(index / 4),
                 column = index % 4,
@@ -79,11 +85,41 @@ export function WumpusWorldPage() {
                   key={k}
                 >
                   {visible && <span className="cave-floor" />}
-                  {k === '3:0' && visible && <small>EXIT</small>}
+                  <span className="room-coordinate">
+                    {String.fromCharCode(65 + column)}
+                    {4 - row}
+                  </span>
+                  {k === '3:0' && visible && (
+                    <small className="exit-marker">
+                      <LogOut /> EXIT
+                    </small>
+                  )}
                   {agent && (
-                    <div className="agent-token">
-                      <Footprints />
-                    </div>
+                    <>
+                      <div className="agent-token">
+                        <Footprints />
+                        <em>AGENT</em>
+                      </div>
+                      {senses.glitter && (
+                        <div className="gold-in-room">
+                          <Gem />
+                        </div>
+                      )}
+                      {senses.breeze && (
+                        <div className="breeze-effect" aria-hidden="true">
+                          <i />
+                          <i />
+                          <i />
+                        </div>
+                      )}
+                      {senses.stench && (
+                        <div className="stench-effect" aria-hidden="true">
+                          <i />
+                          <i />
+                          <i />
+                        </div>
+                      )}
+                    </>
                   )}
                   {visible &&
                     game.status !== 'playing' &&
@@ -95,20 +131,6 @@ export function WumpusWorldPage() {
                 </div>
               )
             })}
-            {senses.breeze && (
-              <div className="breeze-effect" aria-hidden="true">
-                <i />
-                <i />
-                <i />
-              </div>
-            )}
-            {senses.stench && (
-              <div className="stench-effect" aria-hidden="true">
-                <i />
-                <i />
-                <i />
-              </div>
-            )}
           </div>
           <div className="sense-strip">
             <article className={senses.breeze ? 'active breeze' : ''}>
