@@ -1,0 +1,227 @@
+import {
+  ArrowDown,
+  ArrowLeft,
+  ArrowRight,
+  ArrowUp,
+  Crosshair,
+  Footprints,
+  Gem,
+  LogOut,
+  RotateCcw,
+} from 'lucide-react'
+import { useState } from 'react'
+import { Link } from 'react-router-dom'
+import {
+  createWorld,
+  escape,
+  grabGold,
+  moveAgent,
+  percepts,
+  shoot,
+  type Direction,
+} from '../engine/gameEngine'
+
+const directions: { id: Direction; label: string; icon: typeof ArrowUp }[] = [
+  { id: 'up', label: 'Move up', icon: ArrowUp },
+  { id: 'left', label: 'Move left', icon: ArrowLeft },
+  { id: 'down', label: 'Move down', icon: ArrowDown },
+  { id: 'right', label: 'Move right', icon: ArrowRight },
+]
+export function WumpusWorldPage() {
+  const [game, setGame] = useState(createWorld)
+  const [aiming, setAiming] = useState(false)
+  const senses = percepts(game)
+  const entrance = game.agent.row === 3 && game.agent.column === 0
+  function act(direction: Direction) {
+    setGame((current) => (aiming ? shoot(current, direction) : moveAgent(current, direction)))
+    setAiming(false)
+  }
+  return (
+    <div className="wumpus-page">
+      <header className="game-header">
+        <Link to="/" className="game-back">
+          <ArrowLeft size={18} /> TriArcade
+        </Link>
+        <div className="game-title">
+          <span>🕯️</span>
+          <div>
+            <strong>Wumpus World</strong>
+            <small>Agent exploration</small>
+          </div>
+        </div>
+        <span className="game-header-score">Score {game.score}</span>
+      </header>
+      <main className="wumpus-layout">
+        <section className="cave-stage">
+          <div className="cave-heading">
+            <div>
+              <p className="eyebrow">Knowledge-based adventure</p>
+              <h1>Trust your senses.</h1>
+            </div>
+            <p>Explore the cave, secure the gold, and return alive.</p>
+          </div>
+          <div
+            className={`wumpus-board ${senses.breeze ? 'feels-breeze' : ''} ${senses.stench ? 'feels-stench' : ''}`}
+            role="grid"
+            aria-label="Wumpus cave"
+          >
+            {Array.from({ length: 16 }, (_, index) => {
+              const row = Math.floor(index / 4),
+                column = index % 4,
+                k = `${row}:${column}`,
+                visible = game.visited.includes(k),
+                agent = game.agent.row === row && game.agent.column === column
+              return (
+                <div
+                  className={`cave-cell ${visible ? 'explored' : 'hidden'} ${agent ? 'agent-cell' : ''}`}
+                  role="gridcell"
+                  aria-label={`Cave room ${row + 1}, ${column + 1}${visible ? ', explored' : ', unknown'}`}
+                  key={k}
+                >
+                  {visible && <span className="cave-floor" />}
+                  {k === '3:0' && visible && <small>EXIT</small>}
+                  {agent && (
+                    <div className="agent-token">
+                      <Footprints />
+                    </div>
+                  )}
+                  {visible &&
+                    game.status !== 'playing' &&
+                    game.pits.some((p) => p.row === row && p.column === column) && <b>🕳️</b>}
+                  {visible &&
+                    !game.wumpusAlive &&
+                    game.wumpus.row === row &&
+                    game.wumpus.column === column && <b>👹</b>}
+                </div>
+              )
+            })}
+            {senses.breeze && (
+              <div className="breeze-effect" aria-hidden="true">
+                <i />
+                <i />
+                <i />
+              </div>
+            )}
+            {senses.stench && (
+              <div className="stench-effect" aria-hidden="true">
+                <i />
+                <i />
+                <i />
+              </div>
+            )}
+          </div>
+          <div className="sense-strip">
+            <article className={senses.breeze ? 'active breeze' : ''}>
+              <span>〰</span>
+              <div>
+                <strong>{senses.breeze ? 'Breeze detected' : 'Air is still'}</strong>
+                <small>
+                  {senses.breeze ? 'A pit is in an adjacent room' : 'No nearby pit detected'}
+                </small>
+              </div>
+            </article>
+            <article className={senses.stench ? 'active stench' : ''}>
+              <span>◉</span>
+              <div>
+                <strong>{senses.stench ? 'Stench detected' : 'No stench'}</strong>
+                <small>
+                  {senses.stench ? 'The Wumpus is very close' : 'No nearby Wumpus detected'}
+                </small>
+              </div>
+            </article>
+            <article className={senses.glitter ? 'active glitter' : ''}>
+              <Gem />
+              <div>
+                <strong>
+                  {senses.glitter
+                    ? 'Gold is glittering!'
+                    : game.hasGold
+                      ? 'Gold collected'
+                      : 'No glitter'}
+                </strong>
+                <small>{game.hasGold ? 'Return to the entrance' : 'Search every safe room'}</small>
+              </div>
+            </article>
+          </div>
+        </section>
+        <aside className="agent-console">
+          <div className={`mission-update ${game.status}`}>
+            <small>Agent report</small>
+            <strong>{game.message}</strong>
+          </div>
+          <div className="agent-state">
+            <div>
+              <small>Mission</small>
+              <strong>{game.hasGold ? 'Return to exit' : 'Find the gold'}</strong>
+            </div>
+            <span>{game.status === 'playing' ? 'ACTIVE' : game.status.toUpperCase()}</span>
+          </div>
+          <div className={`direction-control ${aiming ? 'aiming' : ''}`}>
+            <small>{aiming ? 'Choose a direction to fire' : 'Choose the agent direction'}</small>
+            <div>
+              {directions.map(({ id, label, icon: Icon }) => (
+                <button
+                  type="button"
+                  aria-label={aiming ? `Shoot ${id}` : label}
+                  disabled={game.status !== 'playing'}
+                  onClick={() => act(id)}
+                  key={id}
+                >
+                  <Icon />
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="agent-actions">
+            <button
+              type="button"
+              className={aiming ? 'active' : ''}
+              disabled={!game.arrow || game.status !== 'playing'}
+              onClick={() => setAiming(!aiming)}
+            >
+              <Crosshair /> {game.arrow ? 'Shoot arrow' : 'Arrow used'}
+            </button>
+            <button type="button" disabled={!senses.glitter} onClick={() => setGame(grabGold)}>
+              <Gem /> Grab gold
+            </button>
+            <button
+              type="button"
+              disabled={!entrance || game.status !== 'playing'}
+              onClick={() => setGame(escape)}
+            >
+              <LogOut /> Exit cave
+            </button>
+          </div>
+          <div className="field-notes">
+            <h2>Agent knowledge</h2>
+            <p>
+              <b>White fog</b> means a pit borders your room. <b>Purple waves</b> mean the living
+              Wumpus is one move away.
+            </p>
+            <div>
+              <span>
+                Explored <strong>{game.visited.length}/16</strong>
+              </span>
+              <span>
+                Arrow <strong>{game.arrow ? '1' : '0'}</strong>
+              </span>
+              <span>
+                Gold <strong>{game.hasGold ? 'Yes' : 'No'}</strong>
+              </span>
+            </div>
+          </div>
+          <button
+            className="restart-mission"
+            type="button"
+            onClick={() => {
+              setGame(createWorld())
+              setAiming(false)
+            }}
+          >
+            <RotateCcw /> Restart mission
+          </button>
+        </aside>
+      </main>
+    </div>
+  )
+}
