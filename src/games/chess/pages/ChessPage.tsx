@@ -1,10 +1,11 @@
-import { ArrowLeft, Flag, RotateCcw, Undo2, Users, Volume2 } from 'lucide-react'
+import { ArrowLeft, Flag, RotateCcw, Undo2, Users, Volume2, VolumeX } from 'lucide-react'
 import type { Move, PieceSymbol } from 'chess.js'
 import { Chess } from 'chess.js'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ChessBoard } from '../components/ChessBoard'
 import { getCheckedKingSquare, getGameStatus, pieceAsset, pieceNames } from '../engine/chessEngine'
+import { useGameSounds } from '../hooks/useGameSounds'
 
 const startingCaptured: PieceSymbol[] = []
 
@@ -14,6 +15,7 @@ export function ChessPage() {
   const [flipped, setFlipped] = useState(false)
   const [soundOn, setSoundOn] = useState(true)
   const [confirmRestart, setConfirmRestart] = useState(false)
+  const playSound = useGameSounds(soundOn)
 
   const history = game.history({ verbose: true })
   const lastMove = history.at(-1) ?? null
@@ -28,17 +30,26 @@ export function ChessPage() {
     { white: [...startingCaptured], black: [...startingCaptured] },
   )
 
-  function syncPosition() {
+  function syncPosition(move?: Move) {
     setPosition(game.fen())
+    if (!move) return
+    if (game.isGameOver()) playSound('game-over')
+    else if (game.isCheck()) playSound('check')
+    else if (move.captured) playSound('capture')
+    else playSound('move')
   }
 
   function undoMove() {
-    if (game.undo()) syncPosition()
+    if (game.undo()) {
+      syncPosition()
+      playSound('undo')
+    }
   }
 
   function restartGame() {
     game.reset()
     syncPosition()
+    playSound('restart')
     setConfirmRestart(false)
   }
 
@@ -62,7 +73,7 @@ export function ChessPage() {
           aria-pressed={soundOn}
           onClick={() => setSoundOn(!soundOn)}
         >
-          <Volume2 size={18} />
+          {soundOn ? <Volume2 size={18} /> : <VolumeX size={18} />}
         </button>
       </header>
 

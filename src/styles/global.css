@@ -683,7 +683,9 @@ footer .brand-mark {
   align-items: center;
 }
 .board-column {
+  width: min(70vh, 720px);
   min-width: 0;
+  justify-self: center;
 }
 .chessboard-wrap {
   width: 100%;
@@ -693,7 +695,8 @@ footer .brand-mark {
   width: 100%;
   aspect-ratio: 1;
   display: grid;
-  grid-template-columns: repeat(8, 1fr);
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  grid-template-rows: repeat(8, minmax(0, 1fr));
   border: 6px solid #242b40;
   border-radius: 8px;
   overflow: hidden;
@@ -703,6 +706,9 @@ footer .brand-mark {
 }
 .chess-square {
   position: relative;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
   padding: 0;
   border: 0;
   display: grid;
@@ -710,10 +716,10 @@ footer .brand-mark {
   cursor: pointer;
 }
 .chess-square.light {
-  background: #dce1d1;
+  background: #f0f0f0;
 }
 .chess-square.dark {
-  background: #697a62;
+  background: #252832;
 }
 .chess-square:hover {
   filter: brightness(1.08);
@@ -729,8 +735,12 @@ footer .brand-mark {
   box-shadow: inset 0 0 18px #7f1d1d;
 }
 .chess-piece {
-  width: 82%;
-  height: 82%;
+  width: 78%;
+  height: 78%;
+  min-width: 0;
+  min-height: 0;
+  max-width: 78%;
+  max-height: 78%;
   object-fit: contain;
   z-index: 2;
   user-select: none;
@@ -773,7 +783,7 @@ footer .brand-mark {
 }
 .light .file-label,
 .light .rank-label {
-  color: #596b53;
+  color: #252832;
 }
 .dark .file-label,
 .dark .rank-label {
@@ -1089,6 +1099,9 @@ footer .brand-mark {
     height: auto;
     min-height: 0;
   }
+  .board-column {
+    width: min(72vh, 680px, calc(100vw - 56px));
+  }
   .moves-panel {
     max-height: 260px;
   }
@@ -1110,6 +1123,9 @@ footer .brand-mark {
   .chess-layout {
     padding: 12px 8px 28px;
     display: block;
+  }
+  .board-column {
+    width: 100%;
   }
   .chessboard {
     border-width: 3px;

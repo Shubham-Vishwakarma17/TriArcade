@@ -1,4 +1,4 @@
-import type { Color, PieceSymbol, Square } from 'chess.js'
+import type { Color, Move, PieceSymbol, Square } from 'chess.js'
 import { Chess } from 'chess.js'
 import { useState } from 'react'
 import { pieceAsset, pieceNames } from '../engine/chessEngine'
@@ -10,7 +10,7 @@ interface ChessBoardProps {
   flipped: boolean
   checkedKing: Square | null
   lastMove: { from: Square; to: Square } | null
-  onMove: () => void
+  onMove: (move: Move) => void
 }
 
 const files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'] as const
@@ -29,10 +29,10 @@ export function ChessBoard({ game, flipped, checkedKing, lastMove, onMove }: Che
   const orderedRanks = flipped ? [...ranks].reverse() : ranks
 
   function completeMove(from: Square, to: Square, promotion?: PieceSymbol) {
-    game.move({ from, to, promotion })
+    const move = game.move({ from, to, promotion })
     setSelected(null)
     setPendingPromotion(null)
-    onMove()
+    onMove(move)
   }
 
   function selectSquare(square: Square) {
