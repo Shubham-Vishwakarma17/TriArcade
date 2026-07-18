@@ -151,8 +151,16 @@ export function WumpusWorldPage() {
                         <em>AGENT</em>
                       </div>
                       {senses.glitter && (
-                        <div className="gold-in-room">
-                          <Gem />
+                        <div
+                          className={`glitter-effect ${senses.goldHere ? 'gold-here' : ''}`}
+                          aria-hidden="true"
+                        >
+                          <i>✦</i>
+                          <i>✧</i>
+                          <i>✦</i>
+                          <i>·</i>
+                          <i>✧</i>
+                          {senses.goldHere && <Gem />}
                         </div>
                       )}
                       {senses.breeze && (
@@ -202,12 +210,22 @@ export function WumpusWorldPage() {
               <div>
                 <strong>
                   {senses.glitter
-                    ? 'Gold is glittering!'
+                    ? senses.goldHere
+                      ? 'Gold is in this room!'
+                      : 'Gold is glittering nearby!'
                     : game.hasGold
                       ? 'Gold collected'
                       : 'No glitter'}
                 </strong>
-                <small>{game.hasGold ? 'Return to the entrance' : 'Search every safe room'}</small>
+                <small>
+                  {game.hasGold
+                    ? 'Return to the entrance'
+                    : senses.goldHere
+                      ? 'Grab it now'
+                      : senses.glitter
+                        ? 'Check an adjacent room'
+                        : 'Search every safe room'}
+                </small>
               </div>
             </article>
           </div>
@@ -251,7 +269,7 @@ export function WumpusWorldPage() {
             </button>
             <button
               type="button"
-              disabled={!senses.glitter}
+              disabled={!senses.goldHere}
               onClick={() => {
                 setGame(grabGold)
                 playSound('check')

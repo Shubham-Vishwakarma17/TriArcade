@@ -81,10 +81,12 @@ export function createWorld(random: () => number = Math.random): WumpusState {
   return state
 }
 export function percepts(state: WumpusState) {
+  const goldHere = !state.hasGold && pointKey(state.agent) === pointKey(state.gold)
   return {
     breeze: state.pits.some((pit) => adjacent(state.agent, pit)),
     stench: state.wumpusAlive && adjacent(state.agent, state.wumpus),
-    glitter: !state.hasGold && pointKey(state.agent) === pointKey(state.gold),
+    glitter: !state.hasGold && (goldHere || adjacent(state.agent, state.gold)),
+    goldHere,
   }
 }
 const delta: Record<Direction, Point> = {

@@ -22,6 +22,26 @@ describe('Wumpus World engine', () => {
     expect(state.wumpusAlive).toBe(false)
     expect(state.arrow).toBe(false)
   })
+  it('glitters beside the gold but only permits grabbing in its room', () => {
+    const nearby = { ...createWorld(), agent: { row: 2, column: 1 }, gold: { row: 1, column: 1 } }
+    expect(percepts(nearby)).toMatchObject({ glitter: true, goldHere: false })
+    expect(grabGold(nearby).hasGold).toBe(false)
+    const onGold = { ...nearby, agent: nearby.gold }
+    expect(percepts(onGold)).toMatchObject({ glitter: true, goldHere: true })
+    expect(grabGold(onGold).hasGold).toBe(true)
+  })
+  it('handles walls, pits, Wumpus collisions, and missed arrows', () => {
+    const base = { ...createWorld(), pits: [{ row: 2, column: 0 }], wumpus: { row: 3, column: 2 } }
+    expect(moveAgent(base, 'left').agent).toEqual(base.agent)
+    expect(moveAgent(base, 'up').status).toBe('dead')
+    expect(moveAgent({ ...base, pits: [] }, 'right').status).toBe('playing')
+    expect(moveAgent({ ...base, pits: [], agent: { row: 3, column: 1 } }, 'right').status).toBe(
+      'dead',
+    )
+    const missed = shoot(base, 'up')
+    expect(missed.arrow).toBe(false)
+    expect(missed.wumpusAlive).toBe(true)
+  })
   it('allows escape only after collecting gold', () => {
     let state = createWorld()
     state = { ...state, agent: state.gold }

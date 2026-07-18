@@ -468,21 +468,69 @@
   font-weight: 900;
   letter-spacing: 0.1em;
 }
-.gold-in-room {
+.glitter-effect {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  pointer-events: none;
+  color: #fde047;
+}
+.glitter-effect i {
+  position: absolute;
+  font-style: normal;
+  filter: drop-shadow(0 0 7px #facc15);
+  animation: gold-glitter 1.1s ease-in-out infinite alternate;
+}
+.glitter-effect i:nth-child(1) {
+  left: 15%;
+  top: 20%;
+  font-size: 22px;
+}
+.glitter-effect i:nth-child(2) {
+  right: 13%;
+  top: 14%;
+  font-size: 16px;
+  animation-delay: -0.4s;
+}
+.glitter-effect i:nth-child(3) {
+  right: 20%;
+  bottom: 17%;
+  font-size: 24px;
+  animation-delay: -0.8s;
+}
+.glitter-effect i:nth-child(4) {
+  left: 18%;
+  bottom: 23%;
+  font-size: 28px;
+  animation-delay: -0.2s;
+}
+.glitter-effect i:nth-child(5) {
+  left: 48%;
+  top: 9%;
+  font-size: 14px;
+  animation-delay: -0.65s;
+}
+.glitter-effect svg {
   position: absolute;
   right: 12%;
   top: 12%;
-  z-index: 6;
-  color: #fde047;
+  width: clamp(20px, 3vw, 34px);
   filter: drop-shadow(0 0 10px #facc15);
+}
+.glitter-effect:not(.gold-here) {
+  background: radial-gradient(circle at 50% 50%, #facc1518, transparent 65%);
+}
+.glitter-effect.gold-here svg {
   animation: gold-glitter 1.1s ease-in-out infinite alternate;
 }
-.gold-in-room svg {
-  width: clamp(20px, 3vw, 34px);
-}
 @keyframes gold-glitter {
+  from {
+    opacity: 0.35;
+    transform: scale(0.7) rotate(-8deg);
+  }
   to {
-    transform: scale(1.18) rotate(8deg);
+    opacity: 1;
+    transform: scale(1.2) rotate(8deg);
     filter: drop-shadow(0 0 18px #fff);
   }
 }
