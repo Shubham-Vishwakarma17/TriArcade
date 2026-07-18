@@ -50,7 +50,6 @@ export function LudoBoard({ state, onToken }: LudoBoardProps) {
             key={key}
           >
             {trackIndex !== undefined && safeTrackIndexes.has(trackIndex) && <span>★</span>}
-            {startPlayer >= 0 && <b>➜</b>}
           </div>
         )
       })}
