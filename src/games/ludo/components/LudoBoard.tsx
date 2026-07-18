@@ -54,12 +54,34 @@ export function LudoBoard({ state, onToken }: LudoBoardProps) {
         )
       })}
       {colors.map((color) => (
-        <div className={`ludo-yard ${color}`} aria-hidden="true" key={color}>
+        <div className={`ludo-yard ${color}`} aria-label={`${color} home`} key={color}>
           <div>
-            <i />
-            <i />
-            <i />
-            <i />
+            {[0, 1, 2, 3].map((tokenId) => {
+              const player = state.players.find((candidate) => candidate.color === color)
+              const token = player?.tokens[tokenId]
+              const movable = Boolean(
+                player &&
+                token &&
+                token.progress < 0 &&
+                state.currentPlayer === player.id &&
+                state.movableTokens.includes(token.id),
+              )
+              return (
+                <span className="yard-slot" key={tokenId}>
+                  {player && token?.progress === -1 && (
+                    <button
+                      className={`ludo-token yard-token ${player.color} ${movable ? 'movable' : ''}`}
+                      type="button"
+                      aria-label={`${player.name} token ${token.id + 1}${movable ? ', movable' : ''}`}
+                      disabled={!movable}
+                      onClick={() => onToken(token.id)}
+                    >
+                      <span>{token.id + 1}</span>
+                    </button>
+                  )}
+                </span>
+              )
+            })}
           </div>
         </div>
       ))}
@@ -72,50 +94,54 @@ export function LudoBoard({ state, onToken }: LudoBoardProps) {
       </div>
       <div className="ludo-token-layer">
         {state.players.flatMap((player) =>
-          player.tokens.map((token) => {
-            const [row, column] = tokenPoint(player.id, token.progress, token.id)
-            const samePoint = state.players
-              .flatMap((candidate) =>
-                candidate.tokens.map((item) => ({
-                  candidate,
-                  item,
-                  point: tokenPoint(candidate.id, item.progress, item.id),
-                })),
+          player.tokens
+            .filter((token) => token.progress >= 0)
+            .map((token) => {
+              const [row, column] = tokenPoint(player.id, token.progress, token.id)
+              const samePoint = state.players
+                .flatMap((candidate) =>
+                  candidate.tokens
+                    .filter((item) => item.progress >= 0)
+                    .map((item) => ({
+                      candidate,
+                      item,
+                      point: tokenPoint(candidate.id, item.progress, item.id),
+                    })),
+                )
+                .filter(({ point }) => point[0] === row && point[1] === column)
+              const stackIndex = samePoint.findIndex(
+                ({ candidate, item }) => candidate.id === player.id && item.id === token.id,
               )
-              .filter(({ point }) => point[0] === row && point[1] === column)
-            const stackIndex = samePoint.findIndex(
-              ({ candidate, item }) => candidate.id === player.id && item.id === token.id,
-            )
-            const offsets =
-              samePoint.length === 1
-                ? [0, 0]
-                : [
-                    [-1.5, -1.5],
-                    [1.5, -1.5],
-                    [-1.5, 1.5],
-                    [1.5, 1.5],
-                  ][stackIndex % 4]
-            const movable =
-              state.currentPlayer === player.id && state.movableTokens.includes(token.id)
-            return (
-              <button
-                className={`ludo-token ${player.color} ${movable ? 'movable' : ''} ${token.progress === 58 ? 'finished' : ''}`}
-                type="button"
-                aria-label={`${player.name} token ${token.id + 1}${movable ? ', movable' : ''}`}
-                disabled={!movable}
-                onClick={() => onToken(token.id)}
-                style={
-                  {
-                    left: `${((column + 0.5) / 15) * 100 + offsets[0]}%`,
-                    top: `${((row + 0.5) / 15) * 100 + offsets[1]}%`,
-                  } as CSSProperties
-                }
-                key={`${player.id}-${token.id}`}
-              >
-                <span>{token.id + 1}</span>
-              </button>
-            )
-          }),
+              const offsets =
+                samePoint.length === 1
+                  ? [0, 0]
+                  : [
+                      [-1.5, -1.5],
+                      [1.5, -1.5],
+                      [-1.5, 1.5],
+                      [1.5, 1.5],
+                    ][stackIndex % 4]
+              const movable =
+                state.currentPlayer === player.id && state.movableTokens.includes(token.id)
+              return (
+                <button
+                  className={`ludo-token ${player.color} ${movable ? 'movable' : ''} ${token.progress === 58 ? 'finished' : ''}`}
+                  type="button"
+                  aria-label={`${player.name} token ${token.id + 1}${movable ? ', movable' : ''}`}
+                  disabled={!movable}
+                  onClick={() => onToken(token.id)}
+                  style={
+                    {
+                      left: `${((column + 0.5) / 15) * 100 + offsets[0]}%`,
+                      top: `${((row + 0.5) / 15) * 100 + offsets[1]}%`,
+                    } as CSSProperties
+                  }
+                  key={`${player.id}-${token.id}`}
+                >
+                  <span>{token.id + 1}</span>
+                </button>
+              )
+            }),
         )}
       </div>
       <div className="base-label red">RED HOME</div>
