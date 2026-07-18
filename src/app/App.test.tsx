@@ -1,0 +1,17 @@
+import '@testing-library/jest-dom/vitest'
+import { render, screen } from '@testing-library/react'
+import { MemoryRouter } from 'react-router-dom'
+import { describe, expect, it } from 'vitest'
+import { App } from './App'
+
+describe('App', () => {
+  it('shows the game arena home page', () => {
+    render(
+      <MemoryRouter>
+        <App />
+      </MemoryRouter>,
+    )
+    expect(screen.getByRole('heading', { name: /every move tells/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Classic Chess' })).toBeInTheDocument()
+  })
+})
