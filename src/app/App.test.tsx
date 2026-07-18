@@ -11,7 +11,10 @@ describe('App', () => {
         <App />
       </MemoryRouter>,
     )
-    expect(screen.getByRole('heading', { name: /every move tells/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /pick a board/i })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Classic Chess' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'N-Queens' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Wumpus World' })).toBeInTheDocument()
+    expect(screen.getAllByText('Play')).toHaveLength(6)
   })
 })
