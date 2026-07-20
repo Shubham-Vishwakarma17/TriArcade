@@ -1,4 +1,4 @@
-import { Gamepad2, GitBranch, Volume2 } from 'lucide-react'
+import { Gamepad2 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
 export function AppHeader() {
@@ -14,15 +14,18 @@ export function AppHeader() {
       </Link>
       <nav className="main-nav" aria-label="Main navigation">
         <a href="#games">Games</a>
-        <a href="#features">Features</a>
-        <a href="#roadmap">Roadmap</a>
+        <Link to="/games/chess">Chess</Link>
+        <Link to="/games/wumpus-world">Wumpus World</Link>
       </nav>
       <div className="header-actions">
-        <button className="icon-button" type="button" aria-label="Sound settings">
-          <Volume2 size={19} />
-        </button>
-        <a className="icon-button" href="#roadmap" aria-label="Development roadmap">
-          <GitBranch size={19} />
+        <a
+          className="header-source-link"
+          href="https://github.com/Shubham-Vishwakarma17/TriArcade"
+          target="_blank"
+          rel="noreferrer"
+          aria-label="TriArcade source code on GitHub"
+        >
+          Source
         </a>
       </div>
     </header>
